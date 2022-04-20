@@ -36,8 +36,8 @@ if (length(args) >= 1) {
   config = rbind(config, data.frame(
     base_folder = 'landscape_genomics_training',
     base_url = "https://webserver.ibba.cnr.it",
-    usernm = ***REMOVED***,
-    passwd = ***REMOVED***,
+    usernm = "",
+    passwd = "",
     species = "Goat", # Sheep or Goat
     force_overwrite = FALSE
   ))
