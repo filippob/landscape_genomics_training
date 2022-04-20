@@ -105,7 +105,7 @@ get_smarter_datasets <- function(base_url, token, query = list()) {
   url <- httr::modify_url(base_url, path = "/smarter-api/datasets")
   
   # reading our data
-  data <- get_smarter_data(url, token, query)
+  data <- get_smarter_data(url, base_url = base_url, token, query)
   
   # returning only the results dataframe
   data$results
@@ -116,10 +116,9 @@ get_smarter_samples <- function(base_url, token, species, query = list()) {
   # mind that species is lowercase in endpoint url
   species <- tolower(species)
   
-  url <-
-    modify_url(base_url, path = sprintf("/smarter-api/samples/%s", species))
+  url <- modify_url(base_url, path = sprintf("/smarter-api/samples/%s", species))
   
-  data <- get_smarter_data(url, token, query)
+  data <- get_smarter_data(url, base_url = base_url, token, query)
   
   # returning only the results dataframe
   data$results
