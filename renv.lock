@@ -338,10 +338,10 @@
     },
     "rprojroot": {
       "Package": "rprojroot",
-      "Version": "2.0.3",
+      "Version": "2.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "1de7ab598047a87bba48434ba35d497d",
+      "Hash": "249d8cd1e74a8f6a26194a91b47f21d1",
       "Requirements": []
     },
     "s2": {
@@ -376,11 +376,11 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "r-smarter-api",
       "RemoteUsername": "cnr-ibba",
-      "RemoteRef": "HEAD",
+      "RemoteRepo": "r-smarter-api",
+      "RemoteRef": "master",
       "RemoteSha": "bb49d8cd49f0416c3b8bb56a1d81e94d70a57c7f",
-      "Hash": "4b5a66ed7b610401abc3fb427294685d",
+      "Hash": "33a623c9b8ea18b4c7c3e9ddbc31bbad",
       "Requirements": [
         "dplyr",
         "httr",
