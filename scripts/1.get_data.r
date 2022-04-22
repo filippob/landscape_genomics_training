@@ -2,34 +2,24 @@
 ##############
 ## SET UP
 ##############
-library("httr")
-# library("getPass")
-library("jsonlite")
-library("tidyverse")
-library("data.table")
 
-# 'httr': to send requests and get response from SMARTER-backend API; 
-# 'jsonlite': to parse JSON output, which is the default format of the API response
-# 'getPass': (not strictly required) it will prompt for credentials in order to not store them in our code
-
-## Generate a JWT token with R
-# you need to generate a JWT token in order to get full access to smarter metadata
-
+library(smarterapi)
 
 ##############
 ## CONFIG FILE
 ##############
 args = commandArgs(trailingOnly=TRUE)
+
 if (length(args) >= 1) {
-  
+
   #loading the parameters
   source(args[1])
   # source("~/config.R")
-  
+
 } else {
   #this is the default configuration, used for development and debug
   writeLines('Using default config')
-  
+
   #this dataframe should be always present in config files, and declared
   #as follows
   config = NULL
