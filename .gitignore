@@ -41,3 +41,6 @@ vignettes/*.pdf
 # CSV/TSV data files
 *.csv
 *.tsv
+
+# HTML files generated using rmarkdown
+*.html
