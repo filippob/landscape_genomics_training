@@ -1,7 +1,11 @@
+
+# helper functions
+
 Nm <- function(Fst) {
   Nm <- (1/4)*((1/Fst) - 1)
   return(Nm)
 }
+
 calculate_snmf_entropy <- function(snmf_res=NULL, maxk=NULL) {
   for (i in 1:maxk) assign(paste0("ce_k", i), cross.entropy(snmf_res, K=i))
   tmp <- ls()[grep(ls(), pattern="ce_k")]
@@ -19,6 +23,7 @@ calculate_snmf_entropy <- function(snmf_res=NULL, maxk=NULL) {
   ce$K <- as.numeric(ce$K)
   return(ce)
 }
+
 snmf_barplot <- function(snmf_res=NULL, K=NULL, dapc_assign=NULL, pop=NULL) {
   best.run <- as.data.frame(cross.entropy(object = snmf_res, K = K))
   best.run <- which(best.run[, 1] == min(best.run[, 1]))
@@ -51,15 +56,8 @@ snmf_barplot <- function(snmf_res=NULL, K=NULL, dapc_assign=NULL, pop=NULL) {
 
   grid.arrange(snmf_plot$plot[[1]])
 }
-lfmm_qvalue <- function(pv = NULL, bim = NULL) {
 
-  if(!require(qvalue)) {
-    if (!requireNamespace("BiocManager", quietly = TRUE)){
-      install.packages("BiocManager")
-    }
-    BiocManager::install("qvalue")
-  }
-  if(!require(data.table)) install.packages("data.table")
+lfmm_qvalue <- function(pv = NULL, bim = NULL) {
 
   res <- as.data.frame(matrix(rep(NA, nrow(pv)*ncol(pv)), nrow(pv)))
   colnames(res) <- colnames(pv)
@@ -87,9 +85,8 @@ lfmm_qvalue <- function(pv = NULL, bim = NULL) {
   return(res)
 
 }
-lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.info = TRUE, use.bim = FALSE, bim = NULL) {
 
-  if(!require(data.table)) install.packages("data.table")
+lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.info = TRUE, use.bim = FALSE, bim = NULL) {
 
   if (bim.info == TRUE) {
     res <- list()
@@ -155,11 +152,13 @@ lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.inf
     return(res)
   }
 }
+
 rda_outliers <- function(load_rda=NULL, n_rda=NULL, n_sign=NULL, z=NULL){
   lims <- mean(load_rda[, n_rda]) + c(-1, 1) * z * sd(load_rda[, n_rda])
   tmp <- which(load_rda[, n_rda] < lims[1] | load_rda[, n_rda] > lims[2])
   tmp <- load_rda[tmp, c(n_rda, (n_sign+1):ncol(load_rda))]
 }
+
 rda_outliers_env <- function(cand1=NULL, cand2=NULL, cand3=NULL, env=NULL, Y=NULL) {
   cand1 <- cbind.data.frame(rep(1,times=nrow(cand1)), cand1)
   cand2 <- cbind.data.frame(rep(2,times=nrow(cand2)), cand2)
@@ -186,6 +185,7 @@ rda_outliers_env <- function(cand1=NULL, cand2=NULL, cand3=NULL, env=NULL, Y=NUL
   cand <- cand[, c("ENV", "SNP", "CHR", "BP", "axis", "loading")]
   return(cand)
 }
+
 adaptive_index <- function(RDA, K, env_pres, range = NULL, method = "loadings", scale_env, center_env){
 
   # Formatting environmental rasters for projection
