@@ -1721,15 +1721,15 @@
     },
     "smarterapi": {
       "Package": "smarterapi",
-      "Version": "0.1.0",
+      "Version": "0.1.2",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
       "RemoteUsername": "cnr-ibba",
       "RemoteRepo": "r-smarter-api",
       "RemoteRef": "master",
-      "RemoteSha": "bb49d8cd49f0416c3b8bb56a1d81e94d70a57c7f",
-      "Hash": "33a623c9b8ea18b4c7c3e9ddbc31bbad",
+      "RemoteSha": "d5debb770dad0744f339df865d8c85d6b925c5cf",
+      "RemoteHost": "api.github.com",
+      "Hash": "6b9cc076ae735bb1e23f52f9ca862c4a",
       "Requirements": [
         "dplyr",
         "httr",
@@ -1737,7 +1737,8 @@
         "logger",
         "lubridate",
         "sf",
-        "tidyr"
+        "tidyr",
+        "urltools"
       ]
     },
     "sourcetools": {
@@ -1857,6 +1858,16 @@
         "xfun"
       ]
     },
+    "triebeard": {
+      "Package": "triebeard",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "847a9d113b78baca4a9a8639609ea228",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
     "tweenr": {
       "Package": "tweenr",
       "Version": "1.0.2",
@@ -1888,6 +1899,17 @@
       "Hash": "6c374b265ba437f8d384ec7a313edd96",
       "Requirements": [
         "Rcpp"
+      ]
+    },
+    "urltools": {
+      "Package": "urltools",
+      "Version": "1.7.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e86a704261a105f4703f653e05defa3e",
+      "Requirements": [
+        "Rcpp",
+        "triebeard"
       ]
     },
     "usethis": {

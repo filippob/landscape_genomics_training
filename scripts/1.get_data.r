@@ -2,31 +2,27 @@
 ##############
 ## SET UP
 ##############
-library("here")
-library("dplyr")
-library("data.table")
-library("smarterapi")
+require("here")
+require("dplyr")
+require("data.table")
+require("smarterapi")
 
-
-################
-## CONFIGURATION
-################
-config <- list(
-  base_folder = here::here(),
-  species = "Goat" # Sheep or Goat
-)
-
-writeLines(' - current values of parameters')
-print(paste("base folder is:", config$base_folder))
-print(paste("selected species:", config$species))
+workdir <- here("scripts")
+message("Moving to the working directory: ", workdir)
+setwd(workdir)
 
 # token is managed through smarterapi
-
-writeLines(" - get list of breeds for the desired species")
-breeds <- smarterapi::get_smarter_breeds(query = list(species = config$species))
-
-writeLines(" - get list of samples for the desired breed")
-samples <- smarterapi::get_smarter_samples(species = config$species, query = list(breed_code = "ANK"))
+samples <- get_smarter_samples(
+  species = "Goat",
+  query = list(
+    country="Italy",
+    type="background",
+    breed="Orobica",
+    breed="Aspromontana",
+    breed="Bionda dell'Adamello",
+    breed="Argentata"
+  )
+)
 
 writeLines(" - write out list of samples to filter the Plink binary file")
 fname = file.path(here("selected_samples.tsv"))
