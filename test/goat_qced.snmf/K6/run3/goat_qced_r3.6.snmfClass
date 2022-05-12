@@ -1,0 +1,5 @@
+new("snmfClass", directory = "K6/run3/", snmfClass.file = "goat_qced_r3.6.snmfClass", 
+    K = 6L, run = 3L, CPU = 1L, seed = 565966281L, alpha = 10, 
+    percentage = 0.05, I = 0L, iterations = 200L, entropy = TRUE, 
+    tolerance = 1e-05, crossEntropy = 1.01500584001136, ploidy = 2L, 
+    Q.input.file = "", Q.output.file = "goat_qced_r3.6.Q", G.output.file = "goat_qced_r3.6.G")
