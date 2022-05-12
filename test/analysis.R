@@ -18,6 +18,7 @@ library("raster")
 library("robust")
 library("ggplot2")
 library("bigsnpr")
+library("parallel")
 library("fuzzySim")
 library("corrplot")
 library("adegenet")
@@ -179,7 +180,7 @@ geo_coord$symbol[which(dapc$grp == 2)] <- 17
 dapc_col <- colorRampPalette(c("red", "gold", "lightblue", "blue"))
 dapc_col <- dapc_col(10)[as.numeric(cut(dapc$ind.coord, breaks = 10))]
 
-windows()
+# windows()
 # quartz() # for MacOS
 # x11() # for linux
 map("italy", fill = T, col = "lightgray", border="gray")
@@ -219,7 +220,15 @@ Nm(Fst = fst$Fsts[2,1])
 ####
 
 # Input file for sNMF (.geno)
-obj.snmf <- snmf(goat_qced, K=1:maxk, repetitions=5, entropy=T, ploidy=2, project="new")
+obj.snmf <- snmf(
+  goat_qced,
+  K=1:maxk,
+  repetitions=5,
+  entropy=T,
+  ploidy=2,
+  project="new",
+  CPU = detectCores()-1
+)
 snmf_entropy <- snmf_entropy(snmf_res = obj.snmf, maxk = maxk)
 head(snmf_entropy)
 
@@ -241,7 +250,7 @@ snmf_barplot(snmf_res = obj.snmf, K = 2, dapc_assign = dapc$assign, pop = fam_qc
 env <- list.files(path = "./", pattern = ".tif", all.files=TRUE, full.names=FALSE)
 env <- stack(paste0("./", env))
 print(env[[1]])
-windows()
+# windows()
 # quartz() # for MacOS
 # x11() # for linux
 plot(env[[1]])
@@ -464,7 +473,7 @@ screeplot(RDA_env, main="Eigenvalues of constrained axes")
 
 # Statistical significance of the RDA model using F-statistics
 # Null hypothesis: no linear relationship exists between the SNP data and the environmental predictors
-signif.full <- anova.cca(RDA_env, parallel=getOption("mc.cores")) # default is permutation=999
+signif.full <- anova.cca(RDA_env, parallel=detectCores()-1) # default is permutation=999
 signif.full
 # Full model is significant
 
@@ -602,7 +611,7 @@ print(res)
 
 # Adaptively enriched RDA
 RDA_outliers <- rda(Y[,res$shared_outliers] ~ BIO08 + BIO15 + ELEV,  Variables)
-anova.cca(RDA_outliers, by="axis", parallel=getOption("mc.cores"))
+anova.cca(RDA_outliers, by="axis", parallel=detectCores()-1)
 
 # Adaptive index
 adaptive_landscape <- adaptive_index(
