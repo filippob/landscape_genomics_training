@@ -42,41 +42,51 @@ table(fam_raw$V1)
 ## Quality control with Plink 2.0
 ####
 plink2 <- download_plink2(dir = "./", overwrite = FALSE, verbose = TRUE)
-snp_plinkQC(
 
-  # path to plink
-  plink.path = plink2,
+# You after the first call, you have to clean-up results in order to call
+# snp_plinkQC again
+tryCatch(
+  {snp_plinkQC(
 
-  # prefix for the input file
-  prefix.in = "./goat",
+    # path to plink
+    plink.path = plink2,
 
-  # type of the input file (binary)
-  file.type = "--bfile",
+    # prefix for the input file
+    prefix.in = "./goat",
 
-  # prefix for the output file
-  prefix.out = "./goat_qced",
+    # type of the input file (binary)
+    file.type = "--bfile",
 
-  # threshold for the minor allele frequency
-  maf = 0.1,
+    # prefix for the output file
+    prefix.out = "./goat_qced",
 
-  # missingness allowed per SNP
-  geno = 0.01,
+    # threshold for the minor allele frequency
+    maf = 0.1,
 
-  # missingness allowed per individual
-  mind = 0.01,
+    # missingness allowed per SNP
+    geno = 0.01,
 
-  # Hardy-Weinberg equilibrium exact test
-  hwe = 1e-50,
+    # missingness allowed per individual
+    mind = 0.01,
 
-  # should the analysis be restricted to autosomes only?
-  # since the default is human, we need to set this option to FALSE for not
-  # to remove chromosomes >22
-  autosome.only = FALSE,
+    # Hardy-Weinberg equilibrium exact test
+    hwe = 1e-50,
 
-  # options for plink (KING-robust kinship estimator to screen for related samples
-  # 0.0884 is to remove up to second-degree relations)
-  extra.options = "--chr-set 29 --allow-extra-chr --king-cutoff 0.0884",
-  verbose = TRUE
+    # should the analysis be restricted to autosomes only?
+    # since the default is human, we need to set this option to FALSE for not
+    # to remove chromosomes >22
+    autosome.only = FALSE,
+
+    # options for plink (KING-robust kinship estimator to screen for related samples
+    # 0.0884 is to remove up to second-degree relations)
+    extra.options = "--chr-set 29 --allow-extra-chr --king-cutoff 0.0884",
+    verbose = TRUE
+  )}, error = function(e) {
+    warning(
+      paste("You have already called snp_plinkQC once, Please remove ",
+            "goat_qced output files before calling this function again: ", e)
+      )
+  }
 )
 
 fam_qced <- read.table("goat_qced.fam")
@@ -229,7 +239,8 @@ obj.snmf <- snmf(
   project="new",
   CPU = detectCores()-1
 )
-snmf_entropy <- snmf_entropy(snmf_res = obj.snmf, maxk = maxk)
+
+snmf_entropy <- calculate_snmf_entropy(snmf_res = obj.snmf, maxk = maxk)
 head(snmf_entropy)
 
 # Cross-entropy
@@ -289,7 +300,9 @@ while (length(which(env_vif$VIF > vif.thr)) >= 1) {
   print(env_vif); cat("\n")
 }
 
+# ri-calculate collinearity with reduced dataset
 env_cor <- cor(env)
+
 # windows()
 # quartz() # for MacOS
 # x11() # for linux

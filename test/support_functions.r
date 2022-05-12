@@ -2,7 +2,7 @@ Nm <- function(Fst) {
   Nm <- (1/4)*((1/Fst) - 1)
   return(Nm)
 }
-snmf_entropy <- function(snmf_res=NULL, maxk=NULL) {
+calculate_snmf_entropy <- function(snmf_res=NULL, maxk=NULL) {
   for (i in 1:maxk) assign(paste0("ce_k", i), cross.entropy(snmf_res, K=i))
   tmp <- ls()[grep(ls(), pattern="ce_k")]
   for (i in 1:maxk) {
@@ -28,13 +28,13 @@ snmf_barplot <- function(snmf_res=NULL, K=NULL, dapc_assign=NULL, pop=NULL) {
   K_snmf$Grp <- dapc_assign
   K_snmf$Pop <- pop
   K_snmf <- K_snmf[order(K_snmf$Grp), ]
-  
+
   dapc_assign <- as.data.frame(K_snmf$Grp)
   colnames(dapc_assign) <- "Cl."
   pop <- as.data.frame(K_snmf$Pop)
   colnames(pop) <- "Pop."
   tab_label <- cbind.data.frame(pop, dapc_assign)
-  
+
   K_snmf <- K_snmf[, -c(ncol(K_snmf)-1,ncol(K_snmf))]
   qlist <- list(K_snmf)
   names(qlist) <- paste0("K=", K)
@@ -48,11 +48,11 @@ snmf_barplot <- function(snmf_res=NULL, K=NULL, dapc_assign=NULL, pop=NULL) {
                      grplabsize = 4, linesize = 0.5, pointsize = 4,
                      returnplot = T, exportplot = F,
                      showyaxis = T, panelspacer = 0.25, panelratio = c(3, 1))
-  
+
   grid.arrange(snmf_plot$plot[[1]])
 }
 lfmm_qvalue <- function(pv = NULL, bim = NULL) {
-  
+
   if(!require(qvalue)) {
     if (!requireNamespace("BiocManager", quietly = TRUE)){
       install.packages("BiocManager")
@@ -60,18 +60,18 @@ lfmm_qvalue <- function(pv = NULL, bim = NULL) {
     BiocManager::install("qvalue")
   }
   if(!require(data.table)) install.packages("data.table")
-  
+
   res <- as.data.frame(matrix(rep(NA, nrow(pv)*ncol(pv)), nrow(pv)))
   colnames(res) <- colnames(pv)
   rownames(res) <- rownames(pv)
-  
+
   for (i in 1:ncol(pv)) {
     q <- qvalue::qvalue(pv[,i])
     q <- q$qvalues
     res[,i] <- q
     rm(q)
   };rm(i)
-  
+
   if (!is.null(bim)) {
     bim <- data.table::fread(bim)
     if (length(which(rownames(pv) == bim$V2)) == nrow(pv)) {
@@ -83,14 +83,14 @@ lfmm_qvalue <- function(pv = NULL, bim = NULL) {
       cat("Information cannot be matched properly: please check order of markers prior to run 'lfmm_qvalue'.")
     }
   }
-  
+
   return(res)
-  
+
 }
 lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.info = TRUE, use.bim = FALSE, bim = NULL) {
-  
+
   if(!require(data.table)) install.packages("data.table")
-  
+
   if (bim.info == TRUE) {
     res <- list()
     e <- qvalues[, 1:nenv]
@@ -109,7 +109,7 @@ lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.inf
     res <- na.omit(res)
     return(res)
   }
-  
+
   if (bim.info == FALSE & use.bim == FALSE) {
     res <- list()
     for (i in 1:ncol(qvalues)) {
@@ -126,17 +126,17 @@ lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.inf
     res <- na.omit(res)
     return(res)
   }
-  
+
   if (bim.info == FALSE & use.bim == TRUE) {
-    
+
     cat("Attention: markers in 'qvalues' and 'bim' are assumed to be in the same order.")
     cat("Please check this condition before using 'lfmm_qvalue_cut' with 'bim.info = FALSE' and 'use.bim = TRUE'.")
-    
+
     bim <- data.table::fread(bim)
     qvalues$SNP <- bim$V2
     qvalues$CHR <- bim$V1
     qvalues$BP <- bim$V4
-    
+
     res <- list()
     e <- qvalues[, 1:nenv]
     s <- qvalues[, (nenv+1):(nenv+3)]
@@ -187,13 +187,13 @@ rda_outliers_env <- function(cand1=NULL, cand2=NULL, cand3=NULL, env=NULL, Y=NUL
   return(cand)
 }
 adaptive_index <- function(RDA, K, env_pres, range = NULL, method = "loadings", scale_env, center_env){
-  
+
   # Formatting environmental rasters for projection
   var_env_proj_pres <- as.data.frame(rasterToPoints(env_pres[[row.names(RDA$CCA$biplot)]]))
-  
+
   # Standardization of the environmental variables
   var_env_proj_RDA <- as.data.frame(scale(var_env_proj_pres[,-c(1,2)], center_env[row.names(RDA$CCA$biplot)], scale_env[row.names(RDA$CCA$biplot)]))
-  
+
   # Predicting pixels genetic component based on RDA axes
   Proj_pres <- list()
   if(method == "loadings"){
@@ -204,7 +204,7 @@ adaptive_index <- function(RDA, K, env_pres, range = NULL, method = "loadings", 
       names(Proj_pres)[i] <- paste0("RDA", as.character(i))
     }
   }
-  
+
   # Prediction with RDA model and linear combinations
   if(method == "predict"){
     pred <- predict(RDA, var_env_proj_RDA[,names(RDA$CCA$biplot[,i])], type = "lc")
@@ -215,12 +215,12 @@ adaptive_index <- function(RDA, K, env_pres, range = NULL, method = "loadings", 
       names(Proj_pres)[i] <- paste0("RDA", as.character(i))
     }
   }
-  
+
   # Mask with the range if supplied
   if(!is.null(range)){
     Proj_pres <- lapply(Proj_pres, function(x) mask(x, range))
   }
-  
+
   # Returning projections for current climates for each RDA axis
   return(Proj_pres = Proj_pres)
 }
