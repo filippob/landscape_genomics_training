@@ -4,7 +4,7 @@
 # BiocManager::install("qvalue")
 # install.packages("rgdal")
 
-
+library("here")
 library("LEA")
 library("maps")
 library("lfmm")
@@ -26,6 +26,9 @@ library("gridExtra")
 library("data.table")
 library("ggVennDiagram")
 
+workdir <- here("test")
+message("Moving to the working directory: ", workdir)
+setwd(workdir)
 
 ## support functions
 source("support_functions.r")
