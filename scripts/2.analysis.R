@@ -27,7 +27,7 @@ require("gridExtra")
 require("data.table")
 require("ggVennDiagram")
 
-workdir <- here("test")
+workdir <- here("scripts")
 message("Moving to the working directory: ", workdir)
 setwd(workdir)
 
