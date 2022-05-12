@@ -47,3 +47,9 @@ vignettes/*.pdf
 
 # Miscellanea
 *.zip
+
+# Computed files
+goat_qced.*
+
+# downloaded plink binary
+plink2
