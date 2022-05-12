@@ -2,11 +2,11 @@
 ##############
 ## SET UP
 ##############
+library("here")
+library("dplyr")
+library("data.table")
+library("smarterapi")
 
-library(smarterapi)
-library(dplyr)
-library(data.table)
-library(here)
 
 ################
 ## CONFIGURATION

@@ -44,3 +44,6 @@ vignettes/*.pdf
 
 # HTML files generated using rmarkdown
 *.html
+
+# Miscellanea
+*.zip

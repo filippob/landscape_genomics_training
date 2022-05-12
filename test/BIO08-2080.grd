@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2022-05-12 03:10:16
+[georeference]
+nrows=1392
+ncols=1426
+xmin=6.633333333
+ymin=35.491666667
+xmax=18.516666666
+ymax=47.091666667
+projection=+proj=longlat +datum=WGS84 +no_defs
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=-8.48333358764648
+maxvalue=24.8166655805676
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=wc2.1_2.5m_bioc_BCC.CSM2.MR_ssp585_2061.2080
