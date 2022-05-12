@@ -1,5 +1,5 @@
 # 0. Libraries and ad hoc functions required ------------------------------
-library("devtools")
+# library("devtools")
 # devtools::install_github("https://github.com/royfrancis/pophelper")
 # BiocManager::install("qvalue")
 # install.packages("rgdal")
