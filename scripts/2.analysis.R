@@ -35,6 +35,7 @@ setwd(workdir)
 source("support_functions.r")
 
 # 1. Quality control of the molecular dataset -----------------------------
+
 fam_raw <- read.table("goat.fam")
 table(fam_raw$V1)
 
@@ -95,7 +96,8 @@ table(fam_qced$V1)
 ####
 ## Associating each individual to its geographical coordinates
 ####
-geo_coord <- read.table("geo_coordinates.txt",h=T)
+
+geo_coord <- read.table("geo_coordinates.txt",header = T)
 View(geo_coord)
 geo_coord <- geo_coord[match(fam_qced$V2, geo_coord$smarter_id), ]
 
@@ -104,8 +106,9 @@ geo_coord <- geo_coord[match(fam_qced$V2, geo_coord$smarter_id), ]
 ####
 ## Preparing the right format
 ####
+
 system(paste0(plink2, " --bfile goat_qced --export A --chr-set 29 --allow-extra-chr --out goat_qced"))
-goat_qced <- fread("./goat_qced.raw", h=T)
+goat_qced <- fread("./goat_qced.raw", header = T)
 write.table(goat_qced, "goat_qced.raw", col.names=T, row.names=F, quote=FALSE, sep=" ")
 popstruct_input <- read.PLINK("goat_qced.raw", parallel=F, sep="\t")
 
@@ -117,43 +120,39 @@ goat_qced <- lfmm2geno("goat_qced.lfmm")
 ####
 ## Principal component analysis (PCA)
 ####
-pca <- glPca(popstruct_input, loadings = F, nf = 10)
+
+pca <- glPca(popstruct_input, loadings = F)
 print(pca)
 eig.perc <- 100*pca$eig/sum(pca$eig)
-sum(eig.perc[1:3])
+head(cumsum(eig.perc))
 
-# grDevices::windows()
-# quartz()  # for MacOS
-# x11()     # for linux
-scatter(pca, posi="topright", xax = 1, yax = 2, label = popstruct_input@pop)
+# PCA scatterplot
+scatter(pca, posi="topright", xax = 1, yax = 2, label = popstruct_input@pop, )
 title("PCA axes 1-2")
 
-# windows()
-# quartz()  # for MacOS
-# x11()     # for linux
+jpeg("01-PCA-1vs2.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(pca$scores[, 1:2], t="n", xlab=paste0("PC1 (", round(eig.perc[1], 1), "%)"), ylab=paste0("PC2 (", round(eig.perc[2], 1), "%)"))
 abline(h=0, v=0, col="gray")
 myCol <- colorplot(pca$scores,pca$scores, add.plot=T, transp=T, alpha=0.5, xaxt="n", yaxt="n", cex=0)
 text(x=pca$scores[, 1], y=pca$scores[, 2], labels=as.character(popstruct_input@pop), col=myCol)
 add.scatter.eig(pca$eig[1:10],2,1,2, posi="topright", inset=.05, ratio=.3)
+dev.off()
 
-# grDevices::windows()
-# quartz()  # for MacOS
-# x11()     # for linux
+jpeg("02-PCA-1vs3.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(pca$scores[, c(1,3)], t="n", xlab=paste0("PC1 (", round(eig.perc[1], 1), "%)"),
      ylab=paste0("PC3 (", round(eig.perc[3], 1), "%)"))
 abline(h=0, v=0, col="gray")
 text(x=pca$scores[, 1], y=pca$scores[, 3], labels=as.character(popstruct_input@pop), col=myCol)
 add.scatter.eig(w = pca$eig[1:10], xax = 1, yax = 3, posi="topright", inset=.05, ratio=.3)
+dev.off()
 
-# Plotting PCA results on the map
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("03-PCA-map.jpeg", width = 7, height = 7, units = 'in', res = 800)
 map("italy", fill = T, col = "lightgray", border="gray")
 points(geo_coord$longitude, geo_coord$latitude, pch=geo_coord$symbol,
        col=myCol, cex=1.5)
+legend("bottomleft", pch=c(0,1,2,5), legend=c("ORO","BIO","ARG", "ASP"))
 title(main = paste("PCA (", round(sum(eig.perc[1:3]), 1), "% var. explained)", sep=""))
+dev.off()
 
 ####
 ## Discriminant analysis of principal components (DAPC)
@@ -162,49 +161,48 @@ title(main = paste("PCA (", round(sum(eig.perc[1:3]), 1), "% var. explained)", s
 # K-means analysis on the principal components
 # Max K to test in K-means analysis
 maxk <- 6
-grp <- find.clusters(popstruct_input, pca.select = "percVar", n.clust = 3,
+grp <- find.clusters(popstruct_input, pca.select = "percVar",
                      perc.pca = 99, max.n.clust = maxk, choose.n.clust = TRUE)
 
 # 1st DAPC run to individuate the optimal number of principal components to retain
-# not to incur into overfitting issues
+# for not to incur into overfitting issues
 dapc <- dapc(popstruct_input, grp$grp, pca.select = "percVar", perc.pca = 99, n.da = 1)
 print(dapc)
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+
+jpeg("04-DAPC-ascore.jpeg", width = 7, height = 7, units = 'in', res = 800)
 ascore <- optim.a.score(dapc)
+dev.off()
 
 # 2nd DAPC run with optimal number of PCs retained
 dapc <- dapc(popstruct_input, grp$grp, n.pca=ascore$best, n.da=length(grp$size) - 1)
 print(dapc)
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("05-DAPC-discriminant function.jpeg", width = 7, height = 7, units = 'in', res = 800)
 scatter(dapc, bg = "white", legend = F, cleg = 0.6, solid = 0.4, col="lightgray")
+dev.off()
 
 # Plotting DAPC results on the map
 geo_coord$grp <- dapc$grp
-geo_coord$symbol[which(dapc$grp == 1)] <- 15
-geo_coord$symbol[which(dapc$grp == 2)] <- 17
+geo_coord$grp_symbol <- NA
+geo_coord$grp_symbol[which(dapc$grp == 1)] <- 15
+geo_coord$grp_symbol[which(dapc$grp == 2)] <- 17
 dapc_col <- colorRampPalette(c("red", "gold", "lightblue", "blue"))
 dapc_col <- dapc_col(10)[as.numeric(cut(dapc$ind.coord, breaks = 10))]
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("06-DAPC-map.jpeg", width = 7, height = 7, units = 'in', res = 800)
 map("italy", fill = T, col = "lightgray", border="gray")
 points(geo_coord$longitude, geo_coord$latitude, pch=geo_coord$grp_symbol,
        col=dapc_col, cex=1.5)
 legend("bottomleft", legend = sort(as.character(unique(geo_coord$grp))),
        pch=sort(unique(geo_coord$grp_symbol)))
 title(main = "DAPC")
+dev.off()
 
 ####
 ##  Fst estimation
 ####
 popstruct_input@pop <- dapc$assign
-fst <- stamppFst(popstruct_input, nboots=100, percent=95, nclusters=4)
+fst <- stamppFst(popstruct_input, nboots=100, percent=95, nclusters=detectCores()-1)
 print(fst)
 
 ####
@@ -221,7 +219,7 @@ print(fst)
 # (Slatkin & Barton, 1989). Generally, Nm>1 is considered as an evidence of
 # sufficient gene flow between the populations to prevent substantial differentiation
 # due to genetic drift. Uncritical applications of the Wright's formula discouraged
-# in contexts where departures from the implicit assumptions of the infinite island model
+# in contexts where departures from th"e implicit assumptions of the infinite island model
 # are expected to occur (Whitlock & Mccauley, 1999).
 Nm(Fst = fst$Fsts[2,1])
 
@@ -244,45 +242,40 @@ snmf_entropy <- calculate_snmf_entropy(snmf_res = obj.snmf, maxk = maxk)
 head(snmf_entropy)
 
 # Cross-entropy
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("07-sNMF-cross-entrpy.jpeg", width = 7, height = 7, units = 'in', res = 800)
 boxplot(CE~K, data=snmf_entropy,
         xlab="N.er of ancestral populations", ylab="Cross-entropy")
+dev.off()
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("08-sNMF-barplot.jpeg", width = 7, height = 7, units = 'in', res = 800)
 snmf_barplot(snmf_res = obj.snmf, K = 2, dapc_assign = dapc$assign, pop = fam_qced$V1)
-
+dev.off()
 
 # 3. Environmental dataset ------------------------------------------------
 
 env <- list.files(path = "./", pattern = ".tif", all.files=TRUE, full.names=FALSE)
 env <- stack(paste0("./", env))
 print(env[[1]])
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
 plot(env[[1]])
+
+jpeg("09-Envar-map.jpeg", width = 10, height = 10, units = 'in', res = 800)
 plot(env)
+dev.off()
 
 # extract environmental information in correspondance of the individual coordinates
 env <- extract(env, geo_coord[, c("longitude", "latitude")])
 View(env)
 
-# investigate collinearity
+# investigating collinearity
 env_cor <- cor(env)
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("10-Envar-cor.jpeg", width = 7, height = 7, units = 'in', res = 800)
 corrplot(
-  env_cor, order = "original", type = "upper",
-  diag=T, tl.cex = 0.7, tl.col = c(
-    rep("red", 11), rep("blue", 8),
-    "forestgreen")
+  env_cor, order = "original", type = "upper", diag=T, tl.cex = 1,
+  tl.col = c(rep("red", 11), rep("blue", 8), "forestgreen"), addCoef.col = "white",
+  number.cex = 0.6, number.font = 1
 )
+dev.off()
 
 # Variance inflation factor (VIF) associated to each variable in the dataset
 env_vif <- multicol(vars = as.data.frame(env))
@@ -300,27 +293,22 @@ while (length(which(env_vif$VIF > vif.thr)) >= 1) {
   print(env_vif); cat("\n")
 }
 
-# ri-calculate collinearity with reduced dataset
 env_cor <- cor(env)
-
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("11-Envar-selected.jpeg", width = 7, height = 7, units = 'in', res = 800)
 corrplot(
-  env_cor, order = "original", type = "upper",
-  diag=T, tl.cex = 0.7, tl.col = c(
-    rep("red", 2), rep("blue", 2),
-    "forestgreen"), addCoef.col = "white"
+  env_cor, order = "original", type = "upper", diag=T, tl.cex = 1.5,
+  tl.col = c(rep("red", 2), rep("blue", 2), "forestgreen"), addCoef.col = "white",
+  number.cex = 1.5, number.font = 1
 )
+dev.off()
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("12-Envar-selected-hist.jpeg", width = 7, height = 7, units = 'in', res = 800)
 par(mfrow=c(2, 3))
 for (i in 1:ncol(env)) {
   hist(env[,i], main="", xlab=colnames(env)[i])
   title(colnames(env)[i])
 }
+dev.off()
 
 # 4. Gene-environment association analysis --------------------------------
 
@@ -348,19 +336,16 @@ rownames(lfmm_pvalues) <- read.table("./goat_qced.bim",h=F,stringsAsFactors=F)$V
 dim(lfmm_pvalues);head(lfmm_pvalues)
 
 # Histograms of p-values
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("13-Lfmm-pvlaues.jpeg", width = 7, height = 5, units = 'in', res = 800)
 par(mfrow = c(2,3), mar = c(3.5,3.5,3,0.5), mgp = c(2.5,0.8,0))
 for (i in 1:ncol(lfmm_pvalues)) {
   hist(lfmm_pvalues[, i], breaks=20, xlab="p-values", xlim=c(0, 1),
        main=colnames(lfmm_pvalues)[i], col="darkgray", border="darkgray")
 }
+dev.off()
 
 # Quantile-Quantile plots
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("14-Lfmm-qqplot.jpeg", width = 7, height = 5, units = 'in', res = 800)
 par(mfrow = c(2,3), mar = c(3.5,4,3,0.5), mgp = c(2.5,0.8,0))
 for (i in 1:ncol(lfmm_pvalues)) {
   qqplot(rexp(length(lfmm_pvalues[,i]), rate=log(10)), -log10(lfmm_pvalues[,i]),
@@ -368,50 +353,37 @@ for (i in 1:ncol(lfmm_pvalues)) {
          pch=19, cex=0.4, main=colnames(lfmm_pvalues)[i])
   abline(0, 1)
 }
+dev.off()
 
 ####
 ## false discovery rate (FDR) control
 ####
-qobj <- qvalue(lfmm_pvalues[, 5])
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
-hist(qobj)+ggtitle(paste0("p-value density histogram - ",colnames(lfmm_pvalues)[5]))
+# q-values calculation
+qobj <- qvalue(lfmm_pvalues[, "ELEV"])
+hist(qobj) +
+  ggtitle(paste0("p-value density histogram - ", colnames(lfmm_pvalues)[5]))
 plot(qobj)
-
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
-a <- hist(qvalue(lfmm_pvalues[, 1]), main=colnames(lfmm_pvalues)[i]) + ggtitle(colnames(lfmm_pvalues)[1])
-b <- hist(qvalue(lfmm_pvalues[, 2]), main=colnames(lfmm_pvalues)[i]) + ggtitle(colnames(lfmm_pvalues)[2])
-c <- hist(qvalue(lfmm_pvalues[, 3]), main=colnames(lfmm_pvalues)[i]) + ggtitle(colnames(lfmm_pvalues)[3])
-d <- hist(qvalue(lfmm_pvalues[, 4]), main=colnames(lfmm_pvalues)[i]) + ggtitle(colnames(lfmm_pvalues)[4])
-e <- hist(qvalue(lfmm_pvalues[, 5]), main=colnames(lfmm_pvalues)[i]) + ggtitle(colnames(lfmm_pvalues)[5])
-gridExtra::grid.arrange(a, b, c, d, e)
 
 # q-values need to be computed by environmental variable
 lfmm_qvalues <- lfmm_qvalue(pv = lfmm_pvalues, bim = "./goat_qced.bim")
 head(lfmm_qvalues)
 
 # Histograms of q-values
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("15-Lfmm-qvlaues.jpeg", width = 7, height = 5, units = 'in', res = 800)
 par(mfrow = c(2,3), mar = c(3.5,3.5,3,0.5), mgp = c(2.5,0.8,0))
 for (i in 1:ncol(lfmm_pvalues)) {
   hist(lfmm_qvalues[, i], breaks=20, xlab="q-values", xlim=c(0, 1),
        main=colnames(lfmm_qvalues)[i], col="darkgray", border="darkgray")
 }
+dev.off()
 
 # LFMM results
 lfmm_res <- lfmm_qvalue_cut(qvalues=lfmm_qvalues, nenv=5, cutoff=0.2, bim.info=T)
 lfmm_res
 
 # Manhattan plots
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("16-Lfmm-manhattan.jpeg", width = 7, height = 5, units = 'in', res = 800)
 par(mfrow = c(length(unique(lfmm_res$ENV)), 1),
     oma = c(1, 1, 1, 1), mar = c(4, 5, 2.7, 1),
     mgp = c(2.5, 0.8, 0))
@@ -426,6 +398,7 @@ for (i in 1:length(unique(lfmm_res$ENV))) {
             cex.lab=1.5, cex.axis=1, cex.main=1.5, font.main=3)
   box()
 }
+dev.off()
 
 ####
 ## Redundancy analysis
@@ -446,11 +419,11 @@ Y[1:6, 1:3]
 # Standardization of the environmental variables
 env <- scale(env, center=TRUE, scale=TRUE)
 
-# Recovering scaling coefficients
+# Recovering scaling coefficients (for later use)
 scale_env <- attr(env, 'scaled:scale')
 center_env <- attr(env, 'scaled:center')
 
-# Environmetal matrix
+# Environmental matrix
 env <- as.data.frame(env)
 row.names(env) <- read.table("goat_qced.fam")$V2
 head(env)
@@ -459,15 +432,15 @@ head(env)
 Variables <- data.frame(PS, env)
 head(Variables)
 Variables_cor <- cor(Variables)
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+
+jpeg("17-pRDA-predictor-cor.jpeg", width = 7, height = 5, units = 'in', res = 800)
 corrplot(
   Variables_cor, order = "original", type = "upper",
   diag=T, tl.cex = 0.7, tl.col = c(
     rep("gray10", 2), rep("red", 2), rep("blue", 2),
-    "forestgreen"), addCoef.col = "white"
+    "forestgreen"), addCoef.col = "white", number.cex = 0.7, number.font = 1
 )
+dev.off()
 
 # Genome scan using pRDA
 RDA_env <- rda(Y ~ BIO03 + BIO08 + BIO13 + BIO15 + ELEV + Condition(PS1 + PS2),  Variables)
@@ -478,11 +451,9 @@ RsquareAdj(RDA_env)
 
 # eigenvalues for the constrained axes
 summary(eigenvals(RDA_env, model = "constrained"))
-
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("18-pRDA-screeplot.jpeg", width = 7, height = 5, units = 'in', res = 800)
 screeplot(RDA_env, main="Eigenvalues of constrained axes")
+dev.off()
 
 # Statistical significance of the RDA model using F-statistics
 # Null hypothesis: no linear relationship exists between the SNP data and the environmental predictors
@@ -493,6 +464,7 @@ signif.full
 # Now, we can check each constrained axis for significance to determine which
 # constrained axes we should investigate for candidate loci (for this test,
 # each constrained axis is tested using all previous constrained axes as conditions)
+# please do not run this line it will take a very long time!
 # signif.axis <- anova.cca(RDA_env, by="axis", parallel=getOption("mc.cores"))
 # signif.axis
 # We should keep the first three axes
@@ -500,9 +472,7 @@ signif.full
 # Plot the RDA: SNPs are in red, individuals in black, the blue vectors are the environmental predictors.
 # The relative arrangement of these items in the ordination space reflects their
 # relationship with the ordination axes, which are linear combinations of the predictor variables.
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("19-pRDA-1vs2.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(RDA_env, type="n", scaling=3)
 # the SNPs
 points(RDA_env, display="species", pch=20, cex=0.7, col="gray32", scaling=3)
@@ -511,16 +481,16 @@ points(RDA_env, display="sites", pch=21, cex=1.3, col="gray32", scaling=3, bg=ge
 # the predictors
 text(RDA_env, scaling=3, display="bp", col="#0868ac", cex=1)
 legend("topleft", legend=c("Orobica", "Bionda dell'Adamello", "Argentata", "Aspromontana"), bty="n", col="gray32", pch=21, cex=1, pt.bg=c("royalblue", "forestgreen", "orange", "gold"))
+dev.off()
 
 # axes 1 & 3
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("20-pRDA-1vs3.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(RDA_env, type="n", scaling=3, choices=c(1,3))
 points(RDA_env, display="species", pch=20, cex=0.7, col="gray32", scaling=3, choices=c(1,3))
 points(RDA_env, display="sites", pch=21, cex=1.3, col="gray32", scaling=3, bg=geo_coord$color, choices=c(1,3))
 text(RDA_env, scaling=3, display="bp", col="#0868ac", cex=1, choices=c(1,3))
 legend("bottomright", legend=c("Orobica", "Bionda dell'Adamello", "Argentata", "Aspromontana"), bty="n", col="gray32", pch=21, cex=1, pt.bg=c("royalblue", "forestgreen", "orange", "gold"))
+dev.off()
 
 # Candidate SNPs involved in local adaptation can be identified by their loading
 # in the ordination space. Here, we will derive the SNP loadings from the three significant
@@ -531,12 +501,12 @@ load.rda$CHR <- read.table("goat_qced.bim")$V1
 load.rda$BP <- read.table("goat_qced.bim")$V4
 head(load.rda)
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("21-pRDA-loadings-hist.jpeg", width = 5, height = 7, units = 'in', res = 800)
+par(mfrow=c(3,1))
 hist(load.rda[,1], main="Loadings on RDA1")
 hist(load.rda[,2], main="Loadings on RDA2")
 hist(load.rda[,3], main="Loadings on RDA3")
+dev.off()
 
 # Identification based on +/- 3.5 SD from the mean
 cand1 <- rda_outliers(load_rda = load.rda, n_rda = 1, n_sign = 3, z = 3.5);nrow(cand1)
@@ -545,12 +515,13 @@ cand3 <- rda_outliers(load_rda = load.rda, n_rda = 3, n_sign = 3, z = 3.5);nrow(
 ncand <- nrow(cand1) + nrow(cand2) + nrow(cand3)
 ncand
 
-# Find the highest correlation between each candidate SNP and the env. variables
-# and return the name of the env. most correlated
+# Correlation between each candidate SNP and the environmental variables
+# and return the name of the environmental variable most correlated
 rda_res <- rda_outliers_env(cand1 = cand1, cand2 = cand2, cand3 = cand3, env = env, Y = Y)
 
 # Plot the SNPs
-# assign a color code to the candidate SNPs based on the association with the env. variables
+# Assigning a color code to the candidate SNPs based on the association with the
+# env. variables
 cand_col <- rep(NA, nrow(rda_res))
 cand_col[which(rda_res$ENV == "BIO03")] <- "orange"
 cand_col[which(rda_res$ENV == "BIO08")] <- "red"
@@ -564,10 +535,9 @@ names(snp_col) <- snp_col
 snp_col[1:length(snp_col)] <- "ghostwhite"
 
 # axes 1 & 2
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("22-pRDA-1vs2-SNPs.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(RDA_env, type="n", scaling=3, xlim=c(-1,1), ylim=c(-1,1))
+snp_col[1:length(snp_col)] <- "ghostwhite"
 points(RDA_env, display="species", pch=21, cex=1, col="gray32", bg=snp_col, scaling=3)
 snp_col[1:length(snp_col)] <- rgb(0,1,0, alpha=0)
 for (i in 1:length(rda_res$SNP)) {
@@ -577,11 +547,10 @@ points(RDA_env, display="species", pch=21, cex=1, col=rgb(0,1,0, alpha=0), bg=sn
 text(RDA_env, scaling=3, display="bp", col="#0868ac", cex=1)
 legend("topleft", legend=c("BIO03","BIO08","BIO13","BIO15","ELEV"), bty="n", col="gray32",
        pch=21, cex=1, pt.bg=c("orange", "red", "royalblue", "lightblue", "forestgreen"))
+dev.off()
 
 # axes 1 & 3
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("23-pRDA-1vs3-SNPs.jpeg", width = 7, height = 7, units = 'in', res = 800)
 plot(RDA_env, type="n", scaling=3, xlim=c(-1,1), ylim=c(-1,1), choices=c(1,3))
 snp_col[1:length(snp_col)] <- "ghostwhite"
 points(RDA_env, display="species", pch=21, cex=1, col="gray32", bg=snp_col, scaling=3, choices=c(1,3))
@@ -593,22 +562,22 @@ points(RDA_env, display="species", pch=21, cex=1, col=rgb(0,1,0, alpha=0), bg=sn
 text(RDA_env, scaling=3, display="bp", col="#0868ac", cex=1, choices=c(1,3))
 legend("topleft", legend=c("BIO03","BIO08","BIO13","BIO15","ELEV"), bty="n", col="gray32",
        pch=21, cex=1, pt.bg=c("orange", "red", "royalblue", "lightblue", "forestgreen"))
+dev.off()
 
 # 5. Adaptive landscape and genomic offset --------------------------------
 
 # How many - if any - oultiers in common between pRDA and LFMM?
 list_outliers <- list(pRDA=unique(rda_res$SNP), LFMM = unique(lfmm_res$SNP))
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("24-Venn.jpeg", width = 7, height = 7, units = 'in', res = 800)
 ggVennDiagram(list_outliers, category.names = c("partial RDA", "LFMM"), lty="solid", size=0.2) +
   scale_fill_gradient2(low = "white", high = 'gray40') +
   scale_color_manual(values = c("grey", "grey", "grey", "grey")) +
   guides(fill = "none")
+dev.off()
 
+# Shared outliers between RDA and LFMM
 shared_outliers <- table(c(unique(rda_res$SNP), LFMM = unique(lfmm_res$SNP)))
 shared_outliers <- names(shared_outliers[which(shared_outliers > 1)])
-
 res <- data.frame(shared_outliers=shared_outliers)
 for (i in 1:nrow(res)) {
   tmp1 <- which(res$shared_outliers[i] == rda_res$SNP)
@@ -634,9 +603,7 @@ adaptive_landscape <- adaptive_index(
   center_env = center_env[c("BIO08","BIO15","ELEV")]
   )
 
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
+jpeg("25-Adaptive landscape.jpeg", width = 8, height = 3, units = 'in', res = 800)
 par(mfrow=c(1, 3))
 plot(RDA_outliers, type="n", scaling=3)
 points(RDA_outliers, display="species", pch=20, cex=1.7, col="gray32", scaling=3)
@@ -646,6 +613,7 @@ legend("topright", legend="RDA1", bty="n", cex = 2)
 plot(adaptive_landscape$RDA2, legend=FALSE, axes=FALSE, bty="n", col=topo.colors(100))
 legend("topright", legend="RDA2", bty="n", cex = 2)
 mtext(text = "Adaptive index - present conditions", side = 3, line = -2, outer = T, at = 0.5, cex=1.5, font=2)
+dev.off()
 
 # Genomic offset
 ras_2080 <- stack(raster("BIO08-2080.grd"), raster("BIO15-2080.grd"), raster("ELEV.tif"))
@@ -657,12 +625,19 @@ adaptive_landscape_2080 <- adaptive_index(
 
 genomic_offset_2080_RDA1 <- (adaptive_landscape_2080$RDA1 - adaptive_landscape$RDA1)^2
 genomic_offset_2080_RDA2 <- (adaptive_landscape_2080$RDA2 - adaptive_landscape$RDA2)^2
-# windows()
-# quartz() # for MacOS
-# x11() # for linux
-par(mfrow=c(1, 2))
-plot(genomic_offset_2080_RDA1, legend=T, axes=FALSE)
-legend("topright", legend="RDA1", bty="n", cex = 2)
-plot(genomic_offset_2080_RDA2, legend=T, axes=FALSE)
-legend("topright", legend="RDA2", bty="n", cex = 2)
-mtext(text = "Genomic offset - 2080", side = 3, line = -2, outer = T, at = 0.5, cex=1.5, font=2)
+
+jpeg("26-Genomic offset.jpeg", width = 12, height = 7, units = 'in', res = 800)
+par(mfrow=c(1, 2), mar=c(3, 0, 5, 5))
+plot(genomic_offset_2080_RDA1, legend=T, axes=FALSE, col=gray.colors(10^4))
+contour(genomic_offset_2080_RDA1, levels=c(10^-3.5, 2.5, 7),
+        labels=NULL, add=T, labcex=0, col=c("green", "gold", "red"))
+legend("topright", title = "RDA1", legend=c("7","2.5","~0"), lty=1,
+       col=c("red", "gold", "green"),
+       bty="n", cex = 1.5)
+plot(genomic_offset_2080_RDA2, legend=T, axes=FALSE, col=gray.colors(10^4))
+contour(genomic_offset_2080_RDA2, levels=c(10^-3.5, 0.5, 2), labels=NULL, add=T, labcex=0,
+        col=c("green", "gold", "red"))
+legend("topright", title = "RDA2", legend=c("2","0.5","~0"), lty=1, col=c("red", "gold", "green"),
+       bty="n", cex = 1.5)
+mtext(text = "Genomic offset - 2080", side = 3, line = -3, outer = T, at = 0.5, cex=2.5, font=1)
+dev.off()
