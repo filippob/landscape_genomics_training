@@ -457,7 +457,7 @@ dev.off()
 
 # Statistical significance of the RDA model using F-statistics
 # Null hypothesis: no linear relationship exists between the SNP data and the environmental predictors
-signif.full <- anova.cca(RDA_env, parallel=getOption("mc.cores")) # default is permutation=999
+signif.full <- anova.cca(RDA_env, parallel=detectCores()-1) # default is permutation=999
 signif.full
 # Full model is significant
 
@@ -573,6 +573,7 @@ ggVennDiagram(list_outliers, category.names = c("partial RDA", "LFMM"), lty="sol
   scale_fill_gradient2(low = "white", high = 'gray40') +
   scale_color_manual(values = c("grey", "grey", "grey", "grey")) +
   guides(fill = "none")
+dev.off()
 
 # Shared outliers between RDA and LFMM
 shared_outliers <- table(c(unique(rda_res$SNP), LFMM = unique(lfmm_res$SNP)))
