@@ -186,6 +186,7 @@ rda_outliers_env <- function(cand1=NULL, cand2=NULL, cand3=NULL, env=NULL, Y=NUL
   return(cand)
 }
 
+# Credits to Capblancq, T., & Forester, B. R. (2021). Redundancy analysis: A Swiss Army Knife for landscape genomics. Methods in Ecology and Evolution, 12(12), 2298-2309.
 adaptive_index <- function(RDA, K, env_pres, range = NULL, method = "loadings", scale_env, center_env){
 
   # Formatting environmental rasters for projection
