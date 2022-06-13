@@ -153,14 +153,14 @@ lfmm_qvalue_cut <- function (qvalues = NULL, nenv = NULL, cutoff = NULL, bim.inf
   }
 }
 
-# Credits to Forester et al. (2018).Forester, B. R., Lasky, J. R., Wagner, H. H., & Urban, D. L. (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype–environment associations. Molecular Ecology, 27(9), 2215-2233.
+# Credits to Forester et al. (2018). Forester, B. R., Lasky, J. R., Wagner, H. H., & Urban, D. L. (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype–environment associations. Molecular Ecology, 27(9), 2215-2233.
 rda_outliers <- function(load_rda=NULL, n_rda=NULL, n_sign=NULL, z=NULL){
   lims <- mean(load_rda[, n_rda]) + c(-1, 1) * z * sd(load_rda[, n_rda])
   tmp <- which(load_rda[, n_rda] < lims[1] | load_rda[, n_rda] > lims[2])
   tmp <- load_rda[tmp, c(n_rda, (n_sign+1):ncol(load_rda))]
 }
 
-# Credits to Forester et al. (2018).Forester, B. R., Lasky, J. R., Wagner, H. H., & Urban, D. L. (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype–environment associations. Molecular Ecology, 27(9), 2215-2233.
+# Credits to Forester et al. (2018). Forester, B. R., Lasky, J. R., Wagner, H. H., & Urban, D. L. (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype–environment associations. Molecular Ecology, 27(9), 2215-2233.
 rda_outliers_env <- function(cand1=NULL, cand2=NULL, cand3=NULL, env=NULL, Y=NULL) {
   cand1 <- cbind.data.frame(rep(1,times=nrow(cand1)), cand1)
   cand2 <- cbind.data.frame(rep(2,times=nrow(cand2)), cand2)
